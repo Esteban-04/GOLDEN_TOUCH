@@ -1,0 +1,7 @@
+{
+  "name": "Golden Touch Catalog",
+  "description": "A luxury digital catalog for exclusive gold bracelets. Manage your collection with high-end visuals and AI-powered descriptions.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
