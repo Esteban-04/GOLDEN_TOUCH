@@ -5,7 +5,6 @@ import { Bracelet } from '../types';
  * SERVICIO DE NUBE REFORZADO - GOLDEN TOUCH
  */
 
-// Llave de acceso única generada para Esteban - Evita saturación pública
 const CLOUD_KEY = 'v7K9pX2mQ5sW8n4J1b3D'; 
 const BUCKET_ID = 'gt_exclusive_vault_esteban_final';
 const API_URL = `https://kvdb.io/${CLOUD_KEY}/${BUCKET_ID}`;
@@ -15,7 +14,6 @@ class CloudStorageService {
 
   async getAllItems(): Promise<Bracelet[]> {
     try {
-      // Intentamos traer datos de la nube
       const response = await fetch(API_URL, { 
         headers: { 'Accept': 'application/json' },
         cache: 'no-store' 
@@ -28,12 +26,9 @@ class CloudStorageService {
       
       const data = await response.json();
       this.cache = Array.isArray(data) ? data : [];
-      
-      // Actualizamos el respaldo local con lo que hay en la nube
       localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(this.cache));
       return this.cache;
     } catch (error) {
-      console.warn("Nube no disponible, cargando respaldo local...");
       return this.getLocalBackup();
     }
   }
@@ -45,16 +40,27 @@ class CloudStorageService {
 
   async saveItem(item: Bracelet): Promise<void> {
     const updatedList = [item, ...this.cache];
-    
     try {
-      // Intentamos guardar en la nube
       await this.syncWithCloud(updatedList);
       this.cache = updatedList;
     } catch (error) {
-      // Si la nube falla, guardamos localmente para no perder el progreso
       this.cache = updatedList;
       localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
-      throw new Error("LocalOnly"); // Avisamos que solo se guardó localmente
+      throw new Error("LocalOnly");
+    }
+  }
+
+  async updateItem(updatedItem: Bracelet): Promise<void> {
+    const updatedList = this.cache.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    );
+    try {
+      await this.syncWithCloud(updatedList);
+      this.cache = updatedList;
+    } catch (error) {
+      this.cache = updatedList;
+      localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+      throw new Error("LocalOnly");
     }
   }
 
