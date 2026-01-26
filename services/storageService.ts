@@ -1,34 +1,61 @@
 
 import { Bracelet } from '../types';
 
-const STORAGE_KEY = 'golden_touch_catalog_items';
-
 /**
- * In a real-world scenario, this service would connect to Firebase, Supabase, 
- * or an AWS S3/DynamoDB stack to store data "in the cloud".
- * For this environment, we simulate cloud persistence with LocalStorage.
+ * SERVICIO DE NUBE GLOBAL (KVDB.io)
+ * Almacena los datos del catálogo para que se sincronicen en todos los dispositivos.
  */
-export const CloudStorage = {
+
+// SEGURIDAD: Cambia este nombre por algo único y secreto para tu negocio.
+// Ejemplo: 'joyeria_gt_secreto_777'. Esto evita que otros puedan ver tus datos técnicos.
+const BUCKET_ID = 'golden_touch_exclusive_v1_cloud'; 
+const API_URL = `https://kvdb.io/M2L7fS7M8m6H5n6Y6d6D6d/${BUCKET_ID}`;
+
+class CloudStorageService {
+  private cache: Bracelet[] = [];
+
   async getAllItems(): Promise<Bracelet[]> {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return [];
     try {
-      return JSON.parse(data);
-    } catch (e) {
-      console.error("Error parsing cloud data", e);
-      return [];
+      const response = await fetch(API_URL, { cache: 'no-store' });
+      
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error("Error de conexión");
+      }
+      
+      const data = await response.json();
+      this.cache = Array.isArray(data) ? data : [];
+      localStorage.setItem(`cache_${BUCKET_ID}`, JSON.stringify(this.cache));
+      return this.cache;
+    } catch (error) {
+      const local = localStorage.getItem(`cache_${BUCKET_ID}`);
+      return local ? JSON.parse(local) : [];
     }
-  },
+  }
 
   async saveItem(item: Bracelet): Promise<void> {
-    const items = await this.getAllItems();
-    const updatedItems = [item, ...items];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
-  },
+    this.cache = [item, ...this.cache];
+    await this.syncWithCloud();
+  }
 
   async deleteItem(id: string): Promise<void> {
-    const items = await this.getAllItems();
-    const filtered = items.filter(i => i.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    this.cache = this.cache.filter(i => i.id !== id);
+    await this.syncWithCloud();
   }
-};
+
+  private async syncWithCloud(): Promise<void> {
+    try {
+      await fetch(API_URL, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.cache),
+      });
+      localStorage.setItem(`cache_${BUCKET_ID}`, JSON.stringify(this.cache));
+    } catch (error) {
+      console.error("Error sincronizando:", error);
+      throw error;
+    }
+  }
+}
+
+export const CloudStorage = new CloudStorageService();

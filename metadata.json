@@ -1,6 +1,11 @@
 {
-  "name": "Golden Touch Catalog",
-  "description": "A luxury digital catalog for exclusive gold bracelets. Manage your collection with high-end visuals and AI-powered descriptions.",
+  "name": "Golden Touch",
+  "short_name": "GoldenTouch",
+  "description": "Catálogo exclusivo de joyería fina 18k.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#bf953f",
   "requestFramePermissions": [
     "camera"
   ]
