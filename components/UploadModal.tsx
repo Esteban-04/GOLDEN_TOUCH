@@ -52,11 +52,18 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSave }) => {
 
     try {
       setStatus('uploading');
-      // 1. Subir imagen a la nube real
-      const cloudImageUrl = await ImageCloudService.uploadImage(imagePreview);
+      let cloudImageUrl = "";
+      
+      try {
+        cloudImageUrl = await ImageCloudService.uploadImage(imagePreview);
+      } catch (imgError: any) {
+        console.error(imgError);
+        alert("⚠️ ERROR DE IMAGEN: No se pudo subir la foto a la nube. Asegúrate de configurar tu propio Cloud Name en imageService.ts.");
+        setStatus('idle');
+        return;
+      }
       
       setStatus('saving');
-      // 2. Crear el objeto con la URL de la nube
       const newItem: Bracelet = {
         id: `br_${Date.now()}`,
         name,
@@ -68,10 +75,15 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSave }) => {
         createdAt: Date.now(),
       };
 
-      // 3. Guardar en la base de datos global
-      await onSave(newItem);
+      try {
+        await onSave(newItem);
+        onClose();
+      } catch (dbError) {
+        console.error(dbError);
+        alert("⚠️ ERROR DE BASE DE DATOS: La imagen se subió pero los datos no se guardaron. Inténtalo de nuevo.");
+      }
     } catch (error) {
-      alert("Error en la conexión con la nube. Revisa tu internet.");
+      alert("Ocurrió un error inesperado. Revisa tu conexión a internet.");
     } finally {
       setStatus('idle');
     }

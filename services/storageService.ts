@@ -2,30 +2,30 @@
 import { Bracelet } from '../types';
 
 /**
- * SERVICIO DE NUBE GLOBAL (KVDB.io)
- * Almacena los datos del catálogo para que se sincronicen en todos los dispositivos.
+ * SERVICIO DE NUBE EXCLUSIVO - GOLDEN TOUCH
  */
 
-// SEGURIDAD: Cambia este nombre por algo único y secreto para tu negocio.
-// Ejemplo: 'joyeria_gt_secreto_777'. Esto evita que otros puedan ver tus datos técnicos.
-const BUCKET_ID = 'golden_touch_exclusive_v1_cloud'; 
-const API_URL = `https://kvdb.io/M2L7fS7M8m6H5n6Y6d6D6d/${BUCKET_ID}`;
+// Usamos una ruta totalmente nueva y única para evitar errores de saturación
+const BUCKET_ID = 'golden_touch_esteban_v1_secure'; 
+const API_URL = `https://kvdb.io/8xK5pM9vQ4sW2n7J3b6E/${BUCKET_ID}`;
 
 class CloudStorageService {
   private cache: Bracelet[] = [];
 
   async getAllItems(): Promise<Bracelet[]> {
     try {
-      const response = await fetch(API_URL, { cache: 'no-store' });
+      const response = await fetch(API_URL, { 
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store' 
+      });
       
       if (!response.ok) {
         if (response.status === 404) return [];
-        throw new Error("Error de conexión");
+        throw new Error(`Error ${response.status}`);
       }
       
       const data = await response.json();
       this.cache = Array.isArray(data) ? data : [];
-      localStorage.setItem(`cache_${BUCKET_ID}`, JSON.stringify(this.cache));
       return this.cache;
     } catch (error) {
       const local = localStorage.getItem(`cache_${BUCKET_ID}`);
@@ -34,25 +34,29 @@ class CloudStorageService {
   }
 
   async saveItem(item: Bracelet): Promise<void> {
-    this.cache = [item, ...this.cache];
-    await this.syncWithCloud();
+    const updatedList = [item, ...this.cache];
+    await this.syncWithCloud(updatedList);
+    this.cache = updatedList;
   }
 
   async deleteItem(id: string): Promise<void> {
-    this.cache = this.cache.filter(i => i.id !== id);
-    await this.syncWithCloud();
+    const updatedList = this.cache.filter(i => i.id !== id);
+    await this.syncWithCloud(updatedList);
+    this.cache = updatedList;
   }
 
-  private async syncWithCloud(): Promise<void> {
+  private async syncWithCloud(data: Bracelet[]): Promise<void> {
     try {
-      await fetch(API_URL, {
+      const response = await fetch(API_URL, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.cache),
+        body: JSON.stringify(data),
       });
-      localStorage.setItem(`cache_${BUCKET_ID}`, JSON.stringify(this.cache));
+
+      if (!response.ok) throw new Error("Error al guardar");
+      localStorage.setItem(`cache_${BUCKET_ID}`, JSON.stringify(data));
     } catch (error) {
-      console.error("Error sincronizando:", error);
+      console.error("Sync Error:", error);
       throw error;
     }
   }

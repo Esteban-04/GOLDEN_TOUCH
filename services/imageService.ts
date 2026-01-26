@@ -1,19 +1,18 @@
 
 /**
  * IMAGE CLOUD SERVICE (Cloudinary)
- * Sube las imágenes a un servidor externo para obtener un link público.
+ * Conexión con la cuenta personal de Esteban (dko8rwuht)
  */
 export const ImageCloudService = {
-  // CONFIGURACIÓN: 
-  // 1. Crea cuenta en Cloudinary.com (Gratis)
-  // 2. Cambia 'demo' por tu "Cloud Name" que aparece en tu panel.
-  // 3. En la configuración de Cloudinary (Upload), crea un "Unsigned Upload Preset" llamado 'ml_default'.
-  
-  CLOUD_NAME: 'demo', // <-- CAMBIA 'demo' POR TU NOMBRE DE USUARIO DE CLOUDINARY
+  // Cloud Name extraído de tu captura de pantalla
+  CLOUD_NAME: 'dko8rwuht', 
 
   async uploadImage(base64: string): Promise<string> {
     const formData = new FormData();
     formData.append('file', base64);
+    
+    // IMPORTANTE: Asegúrate de crear el preset 'ml_default' en modo 'Unsigned' 
+    // en los ajustes de Cloudinary (explicado abajo).
     formData.append('upload_preset', 'ml_default');
 
     try {
@@ -24,14 +23,15 @@ export const ImageCloudService = {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error?.message || "Error al subir a la nube");
+        // Si sale error aquí, es porque falta el 'upload_preset' en Cloudinary
+        throw new Error(errData.error?.message || "Error de configuración en Cloudinary");
       }
       
       const data = await response.json();
       return data.secure_url;
-    } catch (error) {
-      console.error("Fallo crítico en subida de imagen:", error);
-      throw new Error("No se pudo subir la imagen. Revisa tu configuración de Cloudinary.");
+    } catch (error: any) {
+      console.error("Fallo de imagen:", error);
+      throw new Error(error.message || "Error al conectar con Cloudinary");
     }
   }
 };
