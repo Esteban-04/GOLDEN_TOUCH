@@ -12,6 +12,15 @@ interface BraceletCardProps {
 const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit, isAdmin }) => {
   const whatsappUrl = `https://wa.me/573114624643?text=${encodeURIComponent(`Hola Golden Touch, me interesa la manilla "${bracelet.name}" de ${bracelet.karats}K.`)}`;
 
+  // Formateador de moneda para pesos
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <div className="luxury-card rounded-2xl overflow-hidden group">
       <div className="relative aspect-square overflow-hidden bg-zinc-900">
@@ -25,8 +34,8 @@ const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit,
             <>
               <button 
                 onClick={() => onEdit(bracelet)}
-                className="bg-black/50 hover:bg-gold-600/80 p-2 rounded-full backdrop-blur-md transition-colors"
-                title="Editar datos"
+                className="bg-black/50 hover:bg-gold-600/80 p-2.5 rounded-full backdrop-blur-md transition-colors border border-white/10"
+                title="Editar datos y foto"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -34,7 +43,7 @@ const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit,
               </button>
               <button 
                 onClick={() => onDelete(bracelet.id)}
-                className="bg-black/50 hover:bg-red-600/80 p-2 rounded-full backdrop-blur-md transition-colors"
+                className="bg-black/50 hover:bg-red-600/80 p-2.5 rounded-full backdrop-blur-md transition-colors border border-white/10"
                 title="Eliminar de la nube"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,7 +56,7 @@ const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit,
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-green-600/80 hover:bg-green-600 p-2 rounded-full backdrop-blur-md transition-colors flex items-center justify-center"
+            className="bg-green-600/80 hover:bg-green-600 p-2.5 rounded-full backdrop-blur-md transition-colors flex items-center justify-center border border-white/10"
             title="Consultar por WhatsApp"
           >
             <svg className="h-4 w-4 text-white fill-current" viewBox="0 0 24 24">
@@ -56,10 +65,10 @@ const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit,
           </a>
         </div>
         <div className="absolute bottom-3 left-3 flex gap-2">
-          <span className="bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded-full border border-gold-300 text-yellow-500 font-bold uppercase tracking-widest">
+          <span className="bg-black/60 backdrop-blur-md text-[10px] px-2.5 py-1 rounded-full border border-gold-300 text-yellow-500 font-bold uppercase tracking-widest">
             {bracelet.karats}K
           </span>
-          <span className="bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded-full border border-zinc-700 text-zinc-300 font-medium uppercase tracking-widest">
+          <span className="bg-black/60 backdrop-blur-md text-[10px] px-2.5 py-1 rounded-full border border-zinc-700 text-zinc-300 font-medium uppercase tracking-widest">
             {bracelet.weight}g
           </span>
         </div>
@@ -71,14 +80,14 @@ const BraceletCard: React.FC<BraceletCardProps> = ({ bracelet, onDelete, onEdit,
         
         <div className="flex justify-between items-center mt-auto">
           <span className="text-2xl font-light text-white serif">
-            ${bracelet.price.toLocaleString()}
+            {formatPrice(bracelet.price)}
           </span>
           <div className="h-px flex-1 mx-4 bg-gradient-to-r from-transparent via-zinc-800 to-transparent"></div>
           <a 
             href={whatsappUrl} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-[10px] text-zinc-500 uppercase tracking-tighter hover:text-gold-400 transition-colors flex items-center gap-1"
+            className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold hover:text-gold-400 transition-colors flex items-center gap-1"
           >
             Preguntar
           </a>
