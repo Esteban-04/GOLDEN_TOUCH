@@ -2,7 +2,7 @@
 import { Bracelet } from '../types';
 
 /**
- * SERVICIO DE NUBE REFORZADO - GOLDEN TOUCH
+ * SERVICIO DE NUBE OPTIMIZADO - GOLDEN TOUCH
  */
 
 const CLOUD_KEY = 'v7K9pX2mQ5sW8n4J1b3D'; 
@@ -14,7 +14,8 @@ class CloudStorageService {
 
   async getAllItems(): Promise<Bracelet[]> {
     try {
-      const response = await fetch(API_URL, { 
+      // Usamos una señal de tiempo para evitar cache agresiva del navegador
+      const response = await fetch(`${API_URL}?t=${Date.now()}`, { 
         headers: { 'Accept': 'application/json' },
         cache: 'no-store' 
       });
@@ -40,12 +41,15 @@ class CloudStorageService {
 
   async saveItem(item: Bracelet): Promise<void> {
     const updatedList = [item, ...this.cache];
+    // Guardamos en local inmediatamente para que el usuario no espere
+    this.cache = updatedList;
+    localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+    
+    // Intentamos subir a la nube en segundo plano
     try {
       await this.syncWithCloud(updatedList);
-      this.cache = updatedList;
     } catch (error) {
-      this.cache = updatedList;
-      localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+      console.warn("Sincronización pendiente");
       throw new Error("LocalOnly");
     }
   }
@@ -54,24 +58,25 @@ class CloudStorageService {
     const updatedList = this.cache.map(item => 
       item.id === updatedItem.id ? updatedItem : item
     );
+    this.cache = updatedList;
+    localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+
     try {
       await this.syncWithCloud(updatedList);
-      this.cache = updatedList;
     } catch (error) {
-      this.cache = updatedList;
-      localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
       throw new Error("LocalOnly");
     }
   }
 
   async deleteItem(id: string): Promise<void> {
     const updatedList = this.cache.filter(i => i.id !== id);
+    this.cache = updatedList;
+    localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+
     try {
       await this.syncWithCloud(updatedList);
-      this.cache = updatedList;
     } catch (error) {
-      this.cache = updatedList;
-      localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(updatedList));
+      console.error("Fallo al eliminar en nube");
     }
   }
 
@@ -83,7 +88,6 @@ class CloudStorageService {
     });
 
     if (!response.ok) throw new Error("Fallo de sincronización");
-    localStorage.setItem(`gt_backup_${BUCKET_ID}`, JSON.stringify(data));
   }
 }
 
