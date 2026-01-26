@@ -58,7 +58,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSave }) => {
         cloudImageUrl = await ImageCloudService.uploadImage(imagePreview);
       } catch (imgError: any) {
         console.error(imgError);
-        alert("⚠️ ERROR DE IMAGEN: No se pudo subir la foto a la nube. Asegúrate de configurar tu propio Cloud Name en imageService.ts.");
+        alert("⚠️ ERROR DE IMAGEN: No se pudo subir la foto a Cloudinary. Revisa si configuraste el preset 'ml_default' como 'Unsigned'.");
         setStatus('idle');
         return;
       }
@@ -78,12 +78,17 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSave }) => {
       try {
         await onSave(newItem);
         onClose();
-      } catch (dbError) {
-        console.error(dbError);
-        alert("⚠️ ERROR DE BASE DE DATOS: La imagen se subió pero los datos no se guardaron. Inténtalo de nuevo.");
+      } catch (dbError: any) {
+        if (dbError.message === "LocalOnly") {
+          alert("✅ Guardado localmente. La imagen se subió con éxito, pero la nube está lenta. Los datos se sincronizarán pronto.");
+          onClose();
+        } else {
+          console.error(dbError);
+          alert("⚠️ ERROR DE CONEXIÓN: La imagen se subió pero hubo un problema con la base de datos. Intenta de nuevo.");
+        }
       }
     } catch (error) {
-      alert("Ocurrió un error inesperado. Revisa tu conexión a internet.");
+      alert("Ocurrió un error inesperado. Revisa tu conexión.");
     } finally {
       setStatus('idle');
     }
